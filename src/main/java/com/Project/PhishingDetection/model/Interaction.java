@@ -1,7 +1,6 @@
 package com.Project.PhishingDetection.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,9 +13,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "interactions")
 public class Interaction {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long interactionId;
-
+    @Column
     private String originalUrl;
 
     private String source;
