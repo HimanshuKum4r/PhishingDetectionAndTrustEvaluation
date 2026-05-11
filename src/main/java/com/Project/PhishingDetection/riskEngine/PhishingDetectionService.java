@@ -1,6 +1,7 @@
 package com.Project.PhishingDetection.riskEngine;
 
 import com.Project.PhishingDetection.Util.KeywordUtil;
+import com.Project.PhishingDetection.dto.RiskAnalysisDTO;
 import com.Project.PhishingDetection.dto.RiskSignalDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PhishingDetectionService {
+
     private final ThreatIntelRiskEngine threatIntelRiskEngine;
 
     private final UrlStructureRiskEngine urlStructureRiskEngine;
@@ -20,7 +22,7 @@ public class PhishingDetectionService {
     private final KeywordUtil keywordUtil;
 
 
-    public int calculateRisk(String url){
+    public RiskAnalysisDTO calculateRisk(String url){
         List<RiskSignalDTO> signals = new ArrayList<>();
         signals.addAll(threatIntelRiskEngine.evaluate(url));
 
@@ -33,7 +35,11 @@ public class PhishingDetectionService {
 
         int riskScore  = signals.stream().mapToInt(RiskSignalDTO::getWeight).sum();
 
-        return  Math.min(riskScore,100);
+
+        return  RiskAnalysisDTO.builder()
+                .riskScore(Math.min(riskScore,100))
+                .signals(signals)
+                .build();
 
     }
 

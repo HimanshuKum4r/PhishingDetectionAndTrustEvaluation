@@ -1,6 +1,8 @@
 package com.Project.PhishingDetection.service;
 
+import com.Project.PhishingDetection.Util.CategoryUtil;
 import com.Project.PhishingDetection.Util.UrlUtil;
+import com.Project.PhishingDetection.dto.RiskAnalysisDTO;
 import com.Project.PhishingDetection.dto.ScanRequestDTO;
 import com.Project.PhishingDetection.dto.ScanResponseDTO;
 import com.Project.PhishingDetection.model.Interaction;
@@ -15,7 +17,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class InteractionServiceImpl implements InteractionService {
-
+    private final CategoryUtil categoryUtil;
+    private final  AiExplanabilityService aiExplanabilityService;
     private final InteractionRepository interactionRepository;
     private final PhishingDetectionService phishingDetectionService;
 
@@ -40,17 +43,24 @@ public class InteractionServiceImpl implements InteractionService {
                         .build();
 
         interactionRepository.save(interaction);
-        int riskcore = phishingDetectionService.calculateRisk(request.getUrl());
+        RiskAnalysisDTO result = phishingDetectionService.calculateRisk(request.getUrl());
 
-        interaction.setRiskScore(riskcore);
+        interaction.setRiskScore(result.getRiskScore());
+
+        String explanation = aiExplanabilityService.generateExplanation(result.getSignals(), result.getRiskScore());
+
+        interaction.setExplanation(explanation);
+
+        interaction.setCategory(categoryUtil.classify(result.getRiskScore()));
+
         interactionRepository.save(interaction);
 
         return ScanResponseDTO.builder()
                 .interactionToken(token)
-                .riskScore(riskcore)
+                .riskScore(result.getRiskScore())
                 .redirectUrl("/r/" + token)
-                .category("PENDING")
-                .message("Risk evaluation in progress")
+                .category(categoryUtil.classify(result.getRiskScore()))
+                .message(explanation)
                 .build();
 
     }

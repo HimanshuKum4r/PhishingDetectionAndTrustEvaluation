@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,7 +77,7 @@ public class AiExplanabilityService {
             String response =
                     webClient.post()
 
-                            .uri("/v1beta/models/gemini-pro:generateContent?key="
+                            .uri("/v1beta/models/gemini-2.5-flash:generateContent?key="
                                     + apiKey)
 
                             .header("Content-Type",
@@ -89,7 +91,16 @@ public class AiExplanabilityService {
 
                             .block();
 
-            return extractText(response);
+            String explanation = extractText(response);
+            explanation = explanation
+                    .replace("\\n", " ")
+                    .replace("\n", " ")
+                    .replace("**", "")
+                    .replace("*", "")
+                    .replaceAll("\\s+", " ")
+                    .trim();
+
+            return explanation;
 
         }catch (Exception e){
 
@@ -101,15 +112,24 @@ public class AiExplanabilityService {
 
         try{
 
-            int start =
-                    response.indexOf("\"text\":") + 8;
+            ObjectMapper mapper =
+                    new ObjectMapper();
 
-            int end =
-                    response.indexOf("\"", start);
+            JsonNode root =
+                    mapper.readTree(response);
 
-            return response.substring(start,end);
+            return root
+                    .get("candidates")
+                    .get(0)
+                    .get("content")
+                    .get("parts")
+                    .get(0)
+                    .get("text")
+                    .asString();
 
         }catch (Exception e){
+
+            e.printStackTrace();
 
             return "AI explanation unavailable.";
         }

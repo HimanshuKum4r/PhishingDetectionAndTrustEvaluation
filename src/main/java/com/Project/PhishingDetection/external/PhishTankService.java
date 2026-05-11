@@ -20,6 +20,7 @@ public class PhishTankService {
 
             String response =
                     webClient.post()
+                            .uri("/checkurl/")
 
                             .bodyValue(
                                     "url=" + url +

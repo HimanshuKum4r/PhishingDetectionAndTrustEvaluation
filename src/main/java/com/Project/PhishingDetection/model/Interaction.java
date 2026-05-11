@@ -42,7 +42,7 @@ public class Interaction {
     @Column(name ="category")
     private String category;
 
-    @Column(name ="explanation", length = 500)
+    @Column(name ="explanation", length = 1000)
     private String explanation;
 
 
