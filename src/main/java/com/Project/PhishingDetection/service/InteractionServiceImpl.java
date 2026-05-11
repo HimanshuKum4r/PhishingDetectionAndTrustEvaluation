@@ -1,54 +1,57 @@
 package com.Project.PhishingDetection.service;
 
-import com.Project.PhishingDetection.Util.RedirectUtil;
 import com.Project.PhishingDetection.Util.UrlUtil;
+import com.Project.PhishingDetection.dto.ScanRequestDTO;
+import com.Project.PhishingDetection.dto.ScanResponseDTO;
 import com.Project.PhishingDetection.model.Interaction;
 import com.Project.PhishingDetection.repository.InteractionRepository;
 import com.Project.PhishingDetection.riskEngine.PhishingDetectionService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
+@RequiredArgsConstructor
 public class InteractionServiceImpl implements InteractionService {
-    @Autowired
-    private InteractionRepository interactionRepository;
-    @Autowired
-    private PhishingDetectionService phishingDetectionService;
-    @Autowired
-    private  TrustEvaluationService trustEvaluationService;
 
-    public Interaction  processscan(String url){
+    private final InteractionRepository interactionRepository;
+    private final PhishingDetectionService phishingDetectionService;
 
-        String domain = UrlUtil.extractDomain(url);
+    @Override
+    public ScanResponseDTO scanUrl(ScanRequestDTO request) {
+        String token =
+                UUID.randomUUID().toString();
 
-        int riskScore = phishingDetectionService.calculateRisk(url);
+        String domain =
+                UrlUtil.extractDomain(
+                        request.getUrl());
 
-        int trustScore = trustEvaluationService.evaluateTrustScore(url,riskScore);
+        Interaction interaction =
+                Interaction.builder()
+                        .interactionToken(token)
+                        .originalUrl(request.getUrl())
+                        .domain(domain)
+                        .source(request.getSource())
+                        .category("PENDING")
+                        .warningBypassed(false)
+                        .createdAt(LocalDateTime.now())
+                        .build();
 
-        String category;
-        if (trustScore>70)
-            category = "SAFE";
-        else if (trustScore>40)
-            category = "SUSPICIOUS";
-        else
-            category = "MALICIOUS";
+        interactionRepository.save(interaction);
+        int riskcore = phishingDetectionService.calculateRisk(request.getUrl());
 
+        interaction.setRiskScore(riskcore);
+        interactionRepository.save(interaction);
 
-        Interaction interaction = new Interaction();
-        interaction.setOriginalUrl(url);
-        interaction.setDomain(domain);
-        interaction.setRiskScore(riskScore);
-        interaction.setTrustScore(trustScore);
-        interaction.setCategory(category);
-        interaction.setRedirects(RedirectUtil.countRedirects(url));
-
-
-        interaction.setExplanation("risk is evalauted using Url signals, redirects , and database based ");
-
-
-        return interactionRepository.save(interaction);
-
-
+        return ScanResponseDTO.builder()
+                .interactionToken(token)
+                .riskScore(riskcore)
+                .redirectUrl("/r/" + token)
+                .category("PENDING")
+                .message("Risk evaluation in progress")
+                .build();
 
     }
 }

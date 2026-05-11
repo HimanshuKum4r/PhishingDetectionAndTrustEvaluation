@@ -1,18 +1,21 @@
 package com.Project.PhishingDetection.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class ScanResponseDTO {
 
-    private Long interactionId;
+    private String interactionToken;
 
+    private  String redirectUrl;
     private  Integer riskScore;
-
-    private  Integer trustScore;
+//
+//    private  Integer trustScore;
 
     private String category;
 
-    private  String explanation;
+    private  String message;
 
 }

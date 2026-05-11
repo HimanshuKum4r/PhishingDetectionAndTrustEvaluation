@@ -2,6 +2,7 @@ package com.Project.PhishingDetection.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,12 +11,16 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "interactions")
 public class Interaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long interactionId;
+    private Long Id;
+
+    private String interactionToken;
+
     @Column(name ="original_url")
     private String originalUrl;
 
@@ -37,8 +42,11 @@ public class Interaction {
     @Column(name ="category")
     private String category;
 
-    @Column(name ="explanation")
+    @Column(name ="explanation", length = 500)
     private String explanation;
+
+
+    private Boolean warningBypassed;
 
     @Column(name ="Created_at")
     private LocalDateTime createdAt = LocalDateTime.now();

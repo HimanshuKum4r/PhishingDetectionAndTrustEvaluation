@@ -21,7 +21,7 @@ public class UrlUtil {
             return domain.toLowerCase();
 
         } catch (Exception e) {
-            return  null;
+            return null ;
         }
 
     }
